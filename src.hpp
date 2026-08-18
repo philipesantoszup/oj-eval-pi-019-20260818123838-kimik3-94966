@@ -106,6 +106,8 @@ void Calculate(std::vector<Matrix *> keys, std::vector<Matrix *> values,
       gpu_sim.MoveMatrixToSharedMem(KC); // IO, W x r
       Matrix *term = alloc("term");
       gpu_sim.MatMul(QC, KC, term); // r x r, cost 5 r W^2 r
+      gpu_sim.ReleaseMatrix(QC); // release before MatAdd to lower peak SRAM
+      gpu_sim.ReleaseMatrix(KC);
       if (S == nullptr) {
         S = term;
       } else {
@@ -115,8 +117,6 @@ void Calculate(std::vector<Matrix *> keys, std::vector<Matrix *> values,
         gpu_sim.ReleaseMatrix(term);
         S = nS;
       }
-      gpu_sim.ReleaseMatrix(QC);
-      gpu_sim.ReleaseMatrix(KC);
     }
     gpu_sim.ReleaseMatrix(Q);
 
@@ -150,6 +150,8 @@ void Calculate(std::vector<Matrix *> keys, std::vector<Matrix *> values,
         gpu_sim.GetColumn(prow, j, pij, kInSharedMemory); // 1 x 1
         Matrix *term = alloc("term");
         gpu_sim.MatMul(pij, vrow, term); // 1 x dim, cost 5 dim
+        gpu_sim.ReleaseMatrix(pij); // release before MatAdd to lower peak
+        gpu_sim.ReleaseMatrix(vrow);
         if (orow == nullptr) {
           orow = term;
         } else {
@@ -159,8 +161,6 @@ void Calculate(std::vector<Matrix *> keys, std::vector<Matrix *> values,
           gpu_sim.ReleaseMatrix(term);
           orow = nrow;
         }
-        gpu_sim.ReleaseMatrix(pij);
-        gpu_sim.ReleaseMatrix(vrow);
       }
       gpu_sim.ReleaseMatrix(prow);
 
